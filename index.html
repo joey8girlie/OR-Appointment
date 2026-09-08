@@ -793,6 +793,29 @@ body.mobile-mode .developer-credit{ margin:0 0 18px; font-size:12px; }
     .review-grid{ grid-template-columns:1fr; }
 }
 
+
+.btn-api-test{
+    width:100%;
+    margin-top:10px;
+    padding:11px 14px;
+    border:1px solid #B7D7C8;
+    border-radius:10px;
+    background:#F4FAF6;
+    color:#174C3C;
+    font-weight:800;
+    cursor:pointer;
+    transition:.2s;
+}
+.btn-api-test:hover{background:#E7F3ED;}
+.btn-api-test:disabled{opacity:.65;cursor:wait;}
+.api-test-result{
+    margin-top:9px;
+    min-height:20px;
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    color:#6B7280;
+}
 </style>
 </head>
 
@@ -808,6 +831,8 @@ body.mobile-mode .developer-credit{ margin:0 0 18px; font-size:12px; }
             <div class="input-group"><input type="text" id="username" placeholder="ชื่อผู้ใช้งาน" required></div>
             <div class="input-group"><input type="password" id="password" placeholder="รหัสผ่าน" required></div>
             <button type="submit" class="btn-login">เข้าสู่ระบบ</button>
+            <button type="button" class="btn-api-test" onclick="testApiConnection()">🔌 ทดสอบ API</button>
+            <div id="api-test-result" class="api-test-result">ยังไม่ได้ทดสอบการเชื่อมต่อ</div>
             <div class="login-developer-credit">Developed By Udomsak Thoukaew RN.</div>
         </form>
     </div>
@@ -1084,6 +1109,9 @@ async function apiCall(action, data = {}) {
     });
 
     const text = await response.text();
+    if (!response.ok) {
+        throw new Error('API HTTP Error ' + response.status + ': ' + text.slice(0, 200));
+    }
     let result;
     try {
         result = JSON.parse(text);
@@ -1091,10 +1119,39 @@ async function apiCall(action, data = {}) {
         throw new Error('API ตอบกลับไม่ใช่ JSON: ' + text.slice(0, 200));
     }
 
-    if (!result || result.success === false && result.message === 'UNAUTHORIZED') {
-        throw new Error(result && result.message ? result.message : 'เรียก API ไม่สำเร็จ');
+    if (result && result.success === false && result.message === 'UNAUTHORIZED') {
+        throw new Error('เซสชันหมดอายุหรือยังไม่ได้เข้าสู่ระบบ');
     }
     return result;
+}
+
+async function testApiConnection(){
+    const btn = document.querySelector('.btn-api-test');
+    const box = document.getElementById('api-test-result');
+    if(!box || !btn) return;
+
+    btn.disabled = true;
+    box.textContent = '⏳ กำลังทดสอบ API...';
+    box.style.color = '#6B7280';
+
+    try{
+        const started = performance.now();
+        const result = await apiCall('ping');
+        const ms = Math.round(performance.now() - started);
+
+        if(result && result.success){
+            box.innerHTML = '✅ API เชื่อมต่อสำเร็จ · ' + ms + ' ms';
+            box.style.color = '#15803D';
+        }else{
+            throw new Error((result && result.message) || 'API ไม่ตอบกลับตามรูปแบบที่คาดไว้');
+        }
+    }catch(err){
+        box.textContent = '❌ เชื่อมต่อ API ไม่สำเร็จ: ' + (err.message || err);
+        box.style.color = '#B91C1C';
+        console.error('API TEST:', err);
+    }finally{
+        btn.disabled = false;
+    }
 }
 
 let appointments = [];
