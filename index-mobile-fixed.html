@@ -1,0 +1,2438 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OR Appointment V2 - GitHub</title>
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* Mobile rendering lock: keep GitHub Pages text metrics consistent with Apps Script on iOS */
+html{
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+}
+:root{
+    --primary:#174C3C;
+    --primary-soft:#1E6651;
+    --gold:#D6B06B;
+    --gold-soft:#F5E9CF;
+    --bg:#F4F7F5;
+    --card:#FFFFFF;
+    --text:#1F2937;
+    --muted:#6B7280;
+    --danger:#EF4444;
+    --success:#10B981;
+    --shadow:0 10px 35px rgba(0,0,0,.08);
+    --radius:28px;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Sarabun',sans-serif;
+    background:
+    radial-gradient(circle at top left,#E7F3ED 0%,transparent 35%),
+    radial-gradient(circle at top right,#F8F1E3 0%,transparent 30%),
+    var(--bg);
+    color:var(--text);
+    min-height:100vh;
+}
+
+.hidden{
+    display:none !important;
+}
+
+/* LOGIN */
+.login-wrapper{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.login-card{
+    width:100%;
+    max-width:430px;
+    background:rgba(255,255,255,.88);
+    backdrop-filter:blur(20px);
+    border-radius:36px;
+    padding:42px;
+    box-shadow:var(--shadow);
+    text-align:center;
+    border:1px solid rgba(255,255,255,.5);
+}
+
+.logo-img{
+    width:320px;
+    max-width:85vw;
+    height:auto;
+    object-fit:contain;
+}
+    max-width:90%;
+    display:block;
+    margin:auto;
+    margin-bottom:26px;
+}
+.login-developer-credit{
+    margin-top:18px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:600;
+}
+.login-title{
+    font-size:34px;
+    font-weight:800;
+    color:var(--primary);
+    margin-bottom:8px;
+}
+
+.input-group{
+    margin-bottom:15px;
+}
+
+.input-group input{
+    width:100%;
+    padding:16px 18px;
+    border:none;
+    border-radius:18px;
+    background:#F3F4F6;
+    font-size:15px;
+    transition:.25s;
+}
+
+.input-group input:focus{
+    outline:none;
+    background:white;
+    box-shadow:0 0 0 4px rgba(23,76,60,.12);
+}
+
+.btn-login{
+    width:100%;
+    border:none;
+    border-radius:18px;
+    padding:16px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-soft));
+    color:white;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.btn-login:hover{
+    transform:translateY(-2px);
+}
+
+/* MAIN SYSTEM */
+.container{
+    width:95%;
+    max-width:1500px;
+    margin:30px auto;
+}
+
+/* 🔥 แก้ไขจุดบกพร่อง CSS ให้ปุ่มหน้าแรกและโลโก้เรียงต่อกันบรรทัดเดียว ไม่แตกบรรทัด */
+.topbar {
+    background: rgba(255, 255, 255, .88);
+    backdrop-filter: blur(20px);
+    border-radius: 32px;
+    padding: 12px 24px;
+    min-height: auto; 
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: nowrap; 
+    gap: 15px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0; 
+}
+
+.brand img {
+    width: auto;
+    height: 52px; 
+    object-fit: contain;
+}
+
+.brand h2 {
+    color: var(--primary);
+    font-size: 22px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.btn-zone {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap; 
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.btn {
+    border: none;
+    border-radius: 14px;
+    padding: 10px 14px; 
+    cursor: pointer;
+    font-weight: 700;
+    transition: .25s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    white-space: nowrap; 
+}
+
+.btn:hover{
+    transform:translateY(-2px);
+}
+
+.btn-logout{ background:#EEF2F7; color: var(--text); }
+.btn-primary{ background:linear-gradient(135deg,var(--primary),var(--primary-soft)); color:white; }
+.btn-danger{ background:#EF4444; color:white; }
+.btn-success{ background:#10B981; color:white; }
+.btn-info{ background:#3B82F6; color:white; }
+
+.card{
+    background:white;
+    border-radius:32px;
+    padding:24px;
+    box-shadow:var(--shadow);
+    margin-bottom:24px;
+}
+
+/* STATS GRID */
+.stats-grid{
+    display:grid;
+    grid-template-columns: minmax(220px, .95fr) minmax(220px, .95fr) minmax(420px, 2.1fr);
+    gap:20px;
+    margin-bottom:24px;
+}
+
+.stat-card-main {
+    background: linear-gradient(135deg, var(--primary), var(--primary-soft));
+    color: white;
+    border-radius: 30px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.stat-card-main h2 {
+    font-size: 64px;
+    font-weight: 800;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.stat-card-main p {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.stat-card-detail {
+    background: white;
+    border-radius: 30px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+}
+
+.stat-card-detail h3 {
+    color: var(--primary);
+    font-size: 16px;
+    margin-bottom: 14px;
+    border-bottom: 2px solid #E5E7EB;
+    padding-bottom: 8px;
+}
+
+.proc-badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.proc-badge {
+    background: #F3F4F6;
+    padding: 10px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.proc-badge span {
+    background: var(--primary);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+/* CALENDAR */
+#calendar{
+    background:white;
+    border-radius:30px;
+}
+.fc-toolbar-title{ color:var(--primary); font-weight:800 !important; }
+.fc-button{ background:var(--primary) !important; border:none !important; border-radius:14px !important; }
+.fc-daygrid-day:hover{ background:#F8FAF9; cursor: pointer; }
+.fc-day-sat{ background:#F3FBF6 !important; }
+.fc-day-sun{ background:#EDF8F1 !important; }
+
+.fc-daygrid-day-number {
+    padding: 6px 10px !important;
+    font-weight: bold;
+    color: var(--primary-soft) !important;
+    background: #E7F3ED;
+    border-radius: 8px;
+    margin: 4px;
+    font-size: 13px;
+}
+.fc-daygrid-day.thai-holiday-day{ background:#FFF1F2 !important; }
+.fc-daygrid-day.thai-holiday-day .fc-daygrid-day-number{ background:#FEE2E2; color:#B91C1C !important; }
+.fc-event.thai-holiday-event{
+    background:#FEE2E2 !important;
+    border:1px solid #FCA5A5 !important;
+    color:#991B1B !important;
+    font-size:11px !important;
+    font-weight:700 !important;
+    white-space:normal !important;
+    line-height:1.25 !important;
+}
+.fc-event.thai-holiday-event .fc-event-main{ color:#991B1B !important; }
+
+/* SEARCH */
+.search-input{
+    width:100%;
+    border:none;
+    background:#F3F4F6;
+    padding:16px 18px;
+    border-radius:18px;
+    font-size:15px;
+    margin-bottom:20px;
+}
+.search-input:focus{ outline:none; background:white; box-shadow:0 0 0 4px rgba(23,76,60,.1); }
+
+/* TABLE RESPONSIVE */
+.table-responsive{
+    overflow-x: auto;
+    border-radius:22px;
+    border:1px solid #E5E7EB;
+}
+
+#data-table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout: fixed;
+}
+
+#data-table th{
+    background:#F8FAFC;
+    padding:14px 12px;
+    color:var(--muted);
+    font-size:13px;
+    text-align:left;
+}
+
+#data-table td{
+    padding:14px 12px;
+    border-top:1px solid #F1F5F9;
+    font-size:14px;
+    word-break: break-word;
+}
+
+#data-table th:nth-child(1), #data-table td:nth-child(1) { width: 6%; }  
+#data-table th:nth-child(2), #data-table td:nth-child(2) { width: 22%; } 
+#data-table th:nth-child(3), #data-table td:nth-child(3) { width: 18%; } 
+#data-table th:nth-child(4), #data-table td:nth-child(4) { width: 22%; } 
+#data-table th:nth-child(5), #data-table td:nth-child(5) { width: 18%; } 
+#data-table th:nth-child(6), #data-table td:nth-child(6) { width: 14%; } 
+
+#data-table tr:hover td{ background:#F9FAFB; }
+.doctor-group-row td{ background:#E7F3ED !important; color:var(--primary); font-weight:800; padding:10px 12px !important; border-top:2px solid #CFE7DA !important; }
+
+/* MODAL POPUP */
+.overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(5px); z-index:999; }
+#modal{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:95%;
+    max-width:540px;
+    background:white;
+    border-radius:34px;
+    padding:30px;
+    z-index:1000;
+    box-shadow:0 35px 80px rgba(0,0,0,.2);
+    max-height:90vh;
+    overflow:auto;
+}
+
+.modal-title{ font-size:26px; color:var(--primary); font-weight:800; margin-bottom:24px; }
+.form-group{ margin-bottom:16px; }
+.form-group label{ display:block; margin-bottom:8px; font-weight:700; }
+.form-control{ width:100%; border:none; background:#F3F4F6; border-radius:18px; padding:15px 16px; font-size:15px; font-family: inherit; }
+.form-control:focus{ outline:none; background:white; box-shadow:0 0 0 4px rgba(23,76,60,.12); }
+.inline-radio-group { display: flex; gap: 20px; padding: 10px 5px; }
+.inline-radio-group label { font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+.modal-footer{ display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+.btn-save{ border:none; padding:16px; border-radius:18px; background:linear-gradient(135deg,var(--primary),var(--primary-soft)); color:white; font-weight:700; cursor:pointer; font-family: inherit; }
+.btn-delete{ border:none; padding:14px; border-radius:18px; background:#FEF2F2; color:#DC2626; font-weight:700; cursor:pointer; font-family: inherit; }
+
+/* TOAST */
+.toast{ position:fixed; top:20px; right:20px; background:#111827; color:white; padding:14px 18px; border-radius:18px; z-index:9999; opacity:0; transform:translateY(-20px); transition:.25s; }
+.toast.show{ opacity:1; transform:translateY(0); }
+
+.dashboard-grid{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(180px, 1fr));
+    gap:16px;
+    margin-bottom:20px;
+}
+.dashboard-stat{
+    background:white;
+    border-radius:24px;
+    padding:22px;
+    box-shadow:var(--shadow);
+}
+.dashboard-stat strong{
+    display:block;
+    color:var(--primary);
+    font-size:34px;
+    line-height:1;
+    margin-bottom:8px;
+}
+.dashboard-stat span{ color:var(--muted); font-weight:700; }
+.dashboard-section{
+    background:white;
+    border-radius:28px;
+    padding:22px;
+    box-shadow:var(--shadow);
+    margin-bottom:20px;
+}
+.dashboard-section h3{
+    color:var(--primary);
+    font-size:17px;
+    margin-bottom:14px;
+    padding-bottom:8px;
+    border-bottom:1px solid #E5E7EB;
+}
+.dashboard-list{ display:flex; flex-direction:column; gap:10px; }
+.dashboard-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 14px;
+    border-radius:14px;
+    background:#F8FAFC;
+    font-weight:700;
+}
+.dashboard-row small{ color:var(--muted); font-weight:600; }
+.dashboard-columns{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+.mobile-app{ display:none; }
+.mobile-header{
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:rgba(244,247,245,.94);
+    backdrop-filter:blur(16px);
+    padding:12px 12px 8px;
+}
+.mobile-brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:white;
+    border-radius:20px;
+    padding:12px;
+    box-shadow:var(--shadow);
+}
+.mobile-brand img{
+    width:120px;
+    height:auto;
+    object-fit:contain;
+    display:block;
+}
+.mobile-brand h2{ color:var(--primary); font-size:18px; line-height:1.1; }
+.mobile-content{ padding:12px 12px 92px; }
+.mobile-view{ display:none; }
+.mobile-view.active{ display:block; }
+.mobile-calendar-card{ padding:10px; }
+.mobile-calendar-card .fc{ font-size:12px; }
+.mobile-calendar-card .fc-toolbar.fc-header-toolbar{ margin-bottom:8px; }
+.mobile-calendar-card .fc-daygrid-day-number{ font-weight:800; color:var(--text); }
+.mobile-calendar-card .fc-daygrid-day-frame{ min-height:74px; }
+.mobile-search-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+.mobile-search-row input{
+    flex:1;
+    min-width:0;
+    border:1px solid #E5E7EB;
+    border-radius:16px;
+    padding:12px 14px;
+    font-family:inherit;
+    font-weight:700;
+    background:#F8FAFC;
+}
+.mobile-search-row input:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(23,76,60,.1);
+    background:white;
+}
+.mobile-search-row button{
+    border:none;
+    border-radius:16px;
+    padding:12px 14px;
+    background:var(--primary);
+    color:white;
+    font-family:inherit;
+    font-weight:800;
+}
+.mobile-card{
+    background:white;
+    border-radius:22px;
+    padding:16px;
+    box-shadow:var(--shadow);
+    margin-bottom:12px;
+}
+.mobile-card h3{
+    color:var(--primary);
+    font-size:16px;
+    margin-bottom:10px;
+}
+.mobile-stat-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+.mobile-stat{
+    background:linear-gradient(135deg,var(--primary),var(--primary-soft));
+    color:white;
+    border-radius:20px;
+    padding:16px;
+    text-align:center;
+}
+.mobile-stat strong{
+    display:block;
+    color:var(--gold);
+    font-size:38px;
+    line-height:1;
+}
+.mobile-case{
+    border:1px solid #E5E7EB;
+    border-radius:16px;
+    padding:12px;
+    margin-top:10px;
+    background:#F8FAFC;
+}
+.mobile-case b{ color:var(--primary); }
+.mobile-case small{ display:block; color:var(--muted); margin-top:3px; }
+.mobile-nav{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:80;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+    padding:10px 12px 14px;
+    background:rgba(255,255,255,.94);
+    box-shadow:0 -10px 30px rgba(0,0,0,.08);
+}
+.mobile-nav button{
+    border:none;
+    border-radius:16px;
+    background:#F3F4F6;
+    color:var(--text);
+    padding:10px 4px;
+    font-family:inherit;
+    font-weight:800;
+}
+.mobile-nav button.active{ background:var(--primary); color:white; }
+.mobile-summary-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:14px;
+    background:#F8FAFC;
+    margin-top:8px;
+    font-weight:700;
+}
+body.mobile-mode #main-page,
+body.mobile-mode #dashboard-page{ display:none !important; }
+body.mobile-mode #mobile-app:not(.hidden){ display:block !important; }
+body.mobile-mode .container{ width:100%; padding:10px; margin:0; }
+body.mobile-mode .topbar{ min-height:auto; padding:18px; border-radius:24px; flex-direction:column; align-items:stretch; gap:16px; }
+body.mobile-mode .brand{ flex-direction:column; align-items:flex-start; gap:8px; }
+body.mobile-mode .brand img{ width:100%; max-width:320px; max-height:104px; }
+body.mobile-mode .brand h2{ font-size:22px; line-height:1.2; }
+body.mobile-mode .btn-zone{ display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+body.mobile-mode .btn{ width:100%; justify-content:center; padding:12px 10px; font-size:13px; border-radius:14px; }
+body.mobile-mode .stats-grid{ grid-template-columns:1fr; gap:12px; margin-bottom:16px; }
+body.mobile-mode .stat-card-main{ border-radius:22px; padding:20px; min-height:128px; }
+body.mobile-mode .stat-card-main h2{ font-size:48px; }
+body.mobile-mode .stat-card-detail{ border-radius:22px; padding:18px; }
+body.mobile-mode .card{ border-radius:22px; padding:14px; margin-bottom:16px; }
+body.mobile-mode .fc-toolbar.fc-header-toolbar{ flex-direction:column; gap:10px; }
+body.mobile-mode .fc-toolbar-title{ font-size:18px !important; }
+body.mobile-mode .fc .fc-button{ padding:7px 10px !important; font-size:12px !important; }
+body.mobile-mode .fc-daygrid-event{ font-size:10px !important; white-space:normal !important; }
+body.mobile-mode .search-input{ padding:14px; margin-bottom:14px; }
+body.mobile-mode .table-responsive{ border:none; overflow:visible; }
+body.mobile-mode #data-table{ table-layout:auto; min-width:0; border-collapse:separate; border-spacing:0 10px; }
+body.mobile-mode #data-table thead{ display:none; }
+body.mobile-mode #data-table tr{ display:block; background:white; border:1px solid #E5E7EB; border-radius:18px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.05); }
+body.mobile-mode #data-table td{ display:block; width:100% !important; border-top:1px solid #F1F5F9; padding:10px 12px; font-size:13px; }
+body.mobile-mode #data-table td:first-child{ border-top:none; color:var(--muted); font-size:12px; }
+body.mobile-mode .doctor-group-row{ box-shadow:none !important; border:none !important; margin-top:14px; }
+body.mobile-mode .doctor-group-row td{ border-radius:14px; font-size:14px; padding:12px !important; }
+body.mobile-mode #data-table td::before{ content:attr(data-label); display:block; color:var(--muted); font-size:11px; font-weight:700; margin-bottom:2px; }
+body.mobile-mode .doctor-group-row td::before{ display:none; }
+body.mobile-mode #modal{ left:0; right:0; top:auto; bottom:0; transform:none; width:100%; max-width:none; border-radius:28px 28px 0 0; padding:22px; }
+body.mobile-mode #trash-panel{ width:95%; right:10px; left:10px; top:10px; transform:none; max-height:88vh; }
+body.mobile-mode .dashboard-grid{ grid-template-columns:1fr 1fr; gap:10px; }
+body.mobile-mode .dashboard-stat{ border-radius:20px; padding:16px; }
+body.mobile-mode .dashboard-stat strong{ font-size:30px; }
+body.mobile-mode .dashboard-columns{ grid-template-columns:1fr; gap:0; }
+body.mobile-mode .dashboard-section{ border-radius:22px; padding:16px; }
+body.mobile-mode .developer-credit{ margin:0 0 18px; font-size:12px; }
+.developer-credit{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    font-weight:600;
+    margin:4px 0 24px;
+}
+
+/* 🔥 ปรับเปลี่ยนสไตล์แผงถังขยะให้ขยายกว้างเต็มหน้าตาราง ปุ่มจะได้จัดเรียงแนวนอนอย่างลงตัว */
+#trash-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 95%;
+    max-width: 950px;
+    background: white;
+    border-radius: 28px;
+    padding: 24px;
+    z-index: 9999;
+    box-shadow: 0 25px 60px rgba(0,0,0,.15);
+    display: none;
+    max-height: 85vh;
+    overflow: auto;
+}
+.trash-item-row td {
+    padding: 12px;
+    border-top: 1px solid #F1F5F9;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+@media(max-width:768px){
+    html, body{
+        -webkit-text-size-adjust:100%;
+        text-size-adjust:100%;
+    }
+    body{ background:var(--bg); }
+    #main-page, #dashboard-page{ display:none !important; }
+    .mobile-app:not(.hidden){ display:block; }
+    .container{ width:100%; padding:10px; margin:0; }
+    .topbar{ min-height:auto; padding:18px; border-radius:24px; flex-direction:column; align-items:stretch; gap:16px; }
+    .brand{ flex-direction:column; align-items:flex-start; gap:8px; }
+    .brand img{ width:100%; max-width:320px; max-height:104px; }
+    .brand h2{ font-size:22px; line-height:1.2; }
+    .btn-zone{ display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+    .btn{ width:100%; justify-content:center; padding:12px 10px; font-size:13px; border-radius:14px; }
+    .stats-grid{ grid-template-columns:1fr; gap:12px; margin-bottom:16px; }
+    .stat-card-main{ border-radius:22px; padding:20px; min-height:128px; }
+    .stat-card-main h2{ font-size:48px; }
+    .stat-card-detail{ border-radius:22px; padding:18px; }
+    .card{ border-radius:22px; padding:14px; margin-bottom:16px; }
+    .fc-toolbar.fc-header-toolbar{ flex-direction:column; gap:10px; }
+    .fc-toolbar-title{ font-size:18px !important; }
+    .fc .fc-button{ padding:7px 10px !important; font-size:12px !important; }
+    .fc-daygrid-event{ font-size:10px !important; white-space:normal !important; }
+    .search-input{ padding:14px; margin-bottom:14px; }
+    .table-responsive{ border:none; overflow:visible; }
+    #data-table{ table-layout:auto; min-width:0; border-collapse:separate; border-spacing:0 10px; }
+    #data-table thead{ display:none; }
+    #data-table tr{ display:block; background:white; border:1px solid #E5E7EB; border-radius:18px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.05); }
+    #data-table td{ display:block; width:100% !important; border-top:1px solid #F1F5F9; padding:10px 12px; font-size:13px; }
+    #data-table td:first-child{ border-top:none; color:var(--muted); font-size:12px; }
+    .doctor-group-row{ box-shadow:none !important; border:none !important; margin-top:14px; }
+    .doctor-group-row td{ border-radius:14px; font-size:14px; padding:12px !important; }
+    #modal{ left:0; right:0; top:auto; bottom:0; transform:none; width:100%; max-width:none; border-radius:28px 28px 0 0; padding:22px; }
+    #trash-panel{ width:95%; right:10px; left:10px; top:10px; transform:none; max-height:88vh; }
+    .dashboard-grid{ grid-template-columns:1fr 1fr; gap:10px; }
+    .dashboard-stat{ border-radius:20px; padding:16px; }
+    .dashboard-stat strong{ font-size:30px; }
+    .dashboard-columns{ grid-template-columns:1fr; gap:0; }
+    .dashboard-section{ border-radius:22px; padding:16px; }
+    #data-table td::before{ content:attr(data-label); display:block; color:var(--muted); font-size:11px; font-weight:700; margin-bottom:2px; }
+    .doctor-group-row td::before{ display:none; }
+    .developer-credit{ margin:0 0 18px; font-size:12px; }
+
+    /* Match the original Apps Script mobile scale */
+    body.mobile-mode input,
+    body.mobile-mode select,
+    body.mobile-mode textarea,
+    body.mobile-mode button{
+        font-family:'Sarabun',sans-serif;
+        -webkit-text-size-adjust:100%;
+        text-size-adjust:100%;
+    }
+    body.mobile-mode .form-control{ font-size:15px; line-height:1.4; }
+    body.mobile-mode .search-input{ font-size:15px; line-height:1.4; }
+    body.mobile-mode #data-table td{ line-height:1.35; }
+    body.mobile-mode .mobile-nav button{ font-size:14px; line-height:1.25; }
+    body.mobile-mode .mobile-summary-row{ font-size:14px; line-height:1.3; }
+}
+
+
+@media(min-width:769px){
+    #mobile-app{ display:none !important; }
+}
+
+/* CSS FOR PRINT */
+@media print {
+    body { background: white; color: black; font-size: 10px; }
+    #login-page, .topbar, .stats-grid, #calendar, .search-input, #overlay, #modal, #trash-panel, .btn-zone {
+        display: none !important;
+    }
+    .container { width: 100%; max-width: 100%; margin: 0; padding: 0; }
+    .card { box-shadow: none; padding: 0; margin: 0; }
+    .table-responsive { border: none; overflow: visible; }
+    #data-table { min-width: 100% !important; table-layout: auto; }
+    #data-table th { background: #E5E7EB !important; color: black !important; border: 1px solid #9CA3AF; padding: 5px 6px; font-size: 10px; }
+    #data-table td { border: 1px solid #9CA3AF; padding: 5px 6px; font-size: 10px; }
+    #data-table td a { color: black !important; text-decoration: none; }
+    .doctor-group-row td { background:#E5E7EB !important; color:black !important; font-size:10px; }
+    .print-header { display: block !important; text-align: center; margin-bottom: 10px; }
+    .print-header h2 { font-size: 16px; color: #174C3C; }
+}
+.print-header { display: none; }
+
+/* เน้นสีวันปัจจุบัน */
+.fc-day-today { background-color: #FFF3E0 !important; }
+.fc-day-today .fc-daygrid-day-number { color: #E65100 !important; font-size: 16px; background: #FFE0B2; }
+
+.incoming-panel{
+    border:1px solid #D1FAE5;
+    background:#F0FDF4;
+}
+.incoming-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+}
+.incoming-head h3{
+    color:var(--primary);
+    font-size:18px;
+}
+.incoming-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.incoming-item{
+    background:white;
+    border:1px solid #DCE8E1;
+    border-radius:18px;
+    padding:14px;
+    display:grid;
+    grid-template-columns:1.4fr 1fr auto;
+    gap:12px;
+    align-items:center;
+}
+.incoming-item b{ color:var(--primary); }
+.incoming-item small{
+    color:var(--muted);
+    display:block;
+    margin-top:3px;
+}
+.incoming-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+}
+.incoming-empty{
+    color:var(--muted);
+    text-align:center;
+    padding:18px;
+    background:white;
+    border-radius:16px;
+}
+.review-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+.source-box{
+    background:#F8FAFC;
+    border:1px solid #E5E7EB;
+    border-radius:18px;
+    padding:14px;
+    font-size:14px;
+}
+.source-box div{ margin-bottom:7px; }
+@media(max-width:768px){
+    .incoming-item{ grid-template-columns:1fr; }
+    .incoming-actions{ justify-content:stretch; }
+    .incoming-actions .btn{ width:100%; }
+    .review-grid{ grid-template-columns:1fr; }
+}
+
+
+.btn-api-test{
+    width:100%;
+    margin-top:10px;
+    padding:11px 14px;
+    border:1px solid #B7D7C8;
+    border-radius:10px;
+    background:#F4FAF6;
+    color:#174C3C;
+    font-weight:800;
+    cursor:pointer;
+    transition:.2s;
+}
+.btn-api-test:hover{background:#E7F3ED;}
+.btn-api-test:disabled{opacity:.65;cursor:wait;}
+.api-test-result{
+    margin-top:9px;
+    min-height:20px;
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    color:#6B7280;
+}
+</style>
+</head>
+
+<body>
+
+<div id="toast" class="toast"></div>
+
+<div id="login-page">
+    <div class="login-wrapper">
+        <form class="login-card" onsubmit="login();return false;">
+            <img src="https://lh3.googleusercontent.com/d/1zm2tb8xqTzLrSO5epm8zT9BEpht0u3db" class="logo-img">
+            <div class="login-title" style="margin-bottom: 25px;">OR Appointment</div>
+            <div class="input-group"><input type="text" id="username" placeholder="ชื่อผู้ใช้งาน" required></div>
+            <div class="input-group"><input type="password" id="password" placeholder="รหัสผ่าน" required></div>
+            <button type="submit" class="btn-login">เข้าสู่ระบบ</button>
+            <button type="button" class="btn-api-test" onclick="testApiConnection()">🔌 ทดสอบ API</button>
+            <div id="api-test-result" class="api-test-result">ยังไม่ได้ทดสอบการเชื่อมต่อ</div>
+            <div class="login-developer-credit">Developed By Udomsak Thoukaew RN.</div>
+        </form>
+    </div>
+</div>
+
+<div id="main-page" class="hidden">
+    <div class="container">
+        <div class="topbar">
+            <div class="brand">
+    <img src="https://lh3.googleusercontent.com/d/10MHnPx9m0vKYc5xH_4CyCv9TwGr_vW3_">
+    <div><h2>OR Appointment Online</h2></div>
+</div>
+            
+            <div class="btn-zone">
+                <button class="btn btn-success" onclick="openModal()">เพิ่มนัดหมาย</button>
+                <button class="btn btn-success" onclick="openPendingImports()">รอตรวจสอบ OR Queue <span id="incoming-count">0</span></button>
+                <button class="btn btn-primary" onclick="showDashboardPage()">Dashboard</button>
+                <button class="btn btn-info" onclick="printDailyCases()">🖨️ พิมพ์รายวัน</button>
+                <button class="btn btn-secondary" onclick="printMonthlySummary()" style="background-color: #6B7280; color: white;">พิมพ์สรุปรายเดือน</button>
+                <button class="btn btn-primary" onclick="toggleTrash()">🗑️ ถังขยะ</button>
+                <button class="btn btn-logout" onclick="logout()">ออกจากระบบ</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card-main">
+                <h2 id="month-case-count">0</h2>
+                <p>ผู้ป่วยรวมทั้งเดือน</p>
+                <small id="current-selected-month-label" style="font-size:12px; color:var(--gold); margin-top:5px; font-weight:bold;"></small>
+            </div>
+            <div class="stat-card-main">
+                <h2 id="date-case-count">0</h2>
+                <p>ผู้ป่วยประจำวันที่เลือก</p>
+                <small id="current-selected-date-label" style="font-size:12px; color:var(--gold); margin-top:5px; font-weight:bold;"></small>
+            </div>
+            <div class="stat-card-detail">
+                <h3 id="stat-detail-title">ยอดรวมแต่ละหัตถการประจำวัน</h3>
+                <div class="proc-badge-container" id="proc-stats-container"></div>
+            </div>
+        </div>
+
+        <div class="card"><div id="calendar"></div></div>
+
+        <div class="card incoming-panel">
+            <div class="incoming-head">
+                <h3>รายการรอตรวจสอบจาก OR Queue</h3>
+                <button class="btn btn-primary" onclick="openPendingImports()">โหลดรายการ</button>
+            </div>
+            <div id="incoming-list" class="incoming-list">
+                <div class="incoming-empty">กดโหลดรายการเพื่อดูข้อมูลที่รอตรวจสอบ</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="print-header" id="print-title-area">
+                <h2>ตารางนัดหมายผ่าตัด OR Appointment</h2>
+                <p id="print-date-sub"></p>
+            </div>
+
+            <input type="text" id="search-box" class="form-control search-input" placeholder="ค้นหาชื่อ, CID, แพทย์, หัตถการ หรือเบอร์โทร..." oninput="handleSearch(this.value)" autocomplete="off">
+            
+            <div class="table-responsive">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ชื่อผู้ป่วย</th>
+                            <th>CID</th>
+                            <th>แพทย์ผู้ตรวจ</th>
+                            <th>หัตถการ</th>
+                            <th>เบอร์โทรศัพท์</th>
+                        </tr>
+                    </thead>
+                    <tbody id="app-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+        <div class="developer-credit">Developed By Udomsak Thoukaew RN.</div>
+</div>
+
+<div id="mobile-app" class="mobile-app hidden">
+    <div class="mobile-header">
+        <div class="mobile-brand">
+            <img src="https://lh3.googleusercontent.com/d/1zm2tb8xqTzLrSO5epm8zT9BEpht0u3db">
+            <div>
+                <h2>OR Appointment</h2>
+                <small id="mobile-date-label" style="color:var(--muted);font-weight:700;"></small>
+            </div>
+        </div>
+    </div>
+
+    <div class="mobile-content">
+        <section id="mobile-home-view" class="mobile-view active">
+            <div class="mobile-stat-grid">
+                <div class="mobile-stat"><strong id="mobile-month-total">0</strong><span>เดือนนี้</span></div>
+                <div class="mobile-stat"><strong id="mobile-day-total">0</strong><span>วันที่เลือก</span></div>
+            </div>
+            <div class="mobile-card mobile-calendar-card" style="margin-top:12px;">
+                <div id="mobile-calendar"></div>
+            </div>
+            <div class="mobile-card">
+                <h3>ค้นหาผู้ป่วย</h3>
+                <div class="mobile-search-row">
+                    <input type="text" id="mobile-search-box" placeholder="ชื่อ, CID, แพทย์, หัตถการ, เบอร์โทร" oninput="handleMobileSearch(this.value)" autocomplete="off">
+                    <button type="button" onclick="clearMobileSearch()">ล้าง</button>
+                </div>
+            </div>
+            <div class="mobile-card">
+                <h3 id="mobile-selected-date-title">เคสวันที่เลือก</h3>
+                <div id="mobile-selected-list"></div>
+            </div>
+        </section>
+    </div>
+
+    <nav class="mobile-nav">
+        <button id="mobile-nav-home" class="active" onclick="showMobileView('home')">🏠<br>หน้าแรก</button>
+        <button onclick="openMobileAddCase()">➕<br>เพิ่มเคส</button>
+    </nav>
+</div>
+
+<div id="dashboard-page" class="hidden">
+    <div class="container">
+        <div class="topbar">
+            <div class="brand">
+                <img src="https://lh3.googleusercontent.com/d/1FZYPgdMuWKz_OABlLbeuite6rmknLPmq">
+                <div><h2>OR Dashboard</h2></div>
+            </div>
+            <div class="btn-zone">
+                <button class="btn btn-primary" onclick="showMainPage()">กลับหน้าหลัก</button>
+                <button class="btn btn-logout" onclick="logout()">ออกจากระบบ</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-stat"><strong id="dash-month-total">0</strong><span>ผู้ป่วยรวมเดือนนี้</span></div>
+            <div class="dashboard-stat"><strong id="dash-today-total">0</strong><span>ผู้ป่วยวันนี้</span></div>
+            <div class="dashboard-stat"><strong id="dash-doctor-total">0</strong><span>แพทย์ที่มีเคสเดือนนี้</span></div>
+            <div class="dashboard-stat"><strong id="dash-procedure-total">0</strong><span>ชนิดหัตถการเดือนนี้</span></div>
+        </div>
+
+        <div class="dashboard-columns">
+            <div class="dashboard-section">
+                <h3>สรุปตามแพทย์เดือนนี้</h3>
+                <div class="dashboard-list" id="dash-doctor-list"></div>
+            </div>
+            <div class="dashboard-section">
+                <h3>สรุปตามหัตถการเดือนนี้</h3>
+                <div class="dashboard-list" id="dash-procedure-list"></div>
+            </div>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>เคสใกล้ถึงนัด 7 วัน</h3>
+            <div class="dashboard-list" id="dash-upcoming-list"></div>
+        </div>
+
+        <div class="developer-credit">Developed By Udomsak Thoukaew RN.</div>
+    </div>
+</div>
+<div id="overlay" class="overlay hidden" onclick="closeModal()"></div>
+<div id="modal" class="hidden">
+    <div class="modal-title">📝 ข้อมูลนัดหมายผ่าตัด</div>
+    <div class="form-group"><label>วันที่รับการรักษา</label><input type="date" id="p-date" class="form-control"></div>
+    <div class="form-group"><label>ชื่อ-นามสกุล คนไข้</label><input 
+type="text" 
+id="p-name" 
+class="form-control"
+onblur="loadPatientHistory()"
+autocomplete="off"></div>
+    <div class="form-group">
+       <label>เลขบัตรประชาชน (CID)</label>
+       <input type="text" id="p-cid" class="form-control" maxlength="13" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+    </div>
+    
+    <div class="form-group">
+        <label>แพทย์ผู้ดูแล</label>
+        <select id="p-doctor" class="form-control">
+            <option value="นพ.ลักษณ์ (Ortho)">นพ.ลักษณ์ (Ortho)</option>
+            <option value="นพ.ฉัตรชัย (Gen)">นพ.ฉัตรชัย (Gen)</option>
+            <option value="นพ.จิรทีปต์ (Gen)">นพ.จิรทีปต์ (Gen)</option>
+            <option value="นพ.ณพวิทย์ (Gen)">นพ.ณพวิทย์ (Gen)</option>
+            <option value="นพ.ตันติกร (Uro)">นพ.ตันติกร (Uro)</option>
+            <option value="นพ.เขมินทร์ (Uro)">นพ.เขมินทร์ (Uro)</option>
+            <option value="พญ.ธัญลักษณ์ (Plastic)">พญ.ธัญลักษณ์ (Plastic)</option>
+            <option value="นพ.กัมปนาท (Med)">นพ.กัมปนาท (Med)</option>
+            <option value="พญ.ปัญชลี (Med)">พญ.ปัญชลี (Med)</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>หัตถการ (Procedure)</label>
+        <select id="p-proc-select" class="form-control" onchange="handleProcChange(this.value)">
+            <option value="TKA">TKA</option>
+            <option value="CTR">CTR</option>
+            <option value="STR">STR</option>
+            <option value="Excision">Excision</option>
+            <option value="Colonoscope">Colonoscope</option>
+            <option value="EGD">EGD</option>
+            <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+    </div>
+
+    <div class="form-group hidden" id="tka-side-group">
+        <label>ข้างที่ทำหัตถการ (Side)</label>
+        <div class="inline-radio-group">
+            <label><input type="radio" name="tka-side" value="L" checked> ข้างซ้าย (L)</label>
+            <label><input type="radio" name="tka-side" value="R"> ข้างขวา (R)</label>
+        </div>
+    </div>
+
+    <div class="form-group hidden" id="custom-proc-group">
+        <label>ระบุหัตถการเพิ่มเติม</label>
+        <input type="text" id="p-proc-custom" class="form-control" placeholder="พิมพ์ชื่อหัตถการที่ต้องการ...">
+    </div>
+
+    <div class="form-group"><label>เบอร์โทรศัพท์ติดต่อ</label><input type="text" id="p-phone" class="form-control"></div>
+    <div class="modal-footer">
+        <button class="btn-save" onclick="saveData()">💾 บันทึกข้อมูล</button>
+        <button class="btn-delete" id="delete-btn" onclick="deleteData()">🗑️ ลบเคสนี้</button>
+    </div>
+</div>
+
+<div id="trash-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #F1F5F9;">
+        <h3 style="color:#DC2626; font-size:18px; font-weight:800;">🗑️ ถังขยะระบบ (รายการที่ลบ)</h3>
+        <button class="btn btn-logout" onclick="toggleTrash()" style="padding: 4px 12px; font-size:12px; border-radius:8px;">ปิด</button>
+    </div>
+    <button class="btn btn-danger" id="delete-all-trash-btn" onclick="deleteAllTrash()" style="margin-bottom:15px; width:100%; justify-content:center; border-radius:12px; font-size:13px;">ลบข้อมูลถาวรทั้งหมด</button>
+    
+    <div style="width:100%; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; min-width:900px;">
+            <thead>
+                <tr style="background:#F8FAFC; text-align:left;">
+                    <th style="padding:10px; font-size:12px; color:#6B7280; width:5%;">#</th>
+                    <th style="padding:10px; font-size:12px; color:#6B7280; width:18%;">วันที่นัด</th>
+                    <th style="padding:10px; font-size:12px; color:#6B7280; width:32%;">ชื่อผู้ป่วย / CID</th>
+                    <th style="padding:10px; font-size:12px; color:#6B7280; width:25%;">แพทย์ / หัตถการ</th>
+                    <th style="padding:10px; font-size:12px; color:#6B7280; width:14%;">ลบเมื่อ</th>
+                    <th style="padding:10px; font-size:12px; color:#6B7280; width:18%;">หมายเหตุ</th>
+                    <th style="padding:10px; font-size:12px; color:#6B7280; width:20%; text-align:center;">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody id="trashTbody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/th.js"></script>
+<script>
+/* =========================================================
+   GITHUB VERSION - Google Apps Script API
+   เปลี่ยนเฉพาะ URL ด้านล่างเป็น /exec ของ Apps Script เดิม
+   ========================================================= */
+const API_URL = 'PASTE_YOUR_EXISTING_APPS_SCRIPT_EXEC_URL_HERE';
+
+async function apiCall(action, data = {}) {
+    if (!API_URL || API_URL.includes('PASTE_YOUR_EXISTING')) {
+        throw new Error('ยังไม่ได้ตั้งค่า API_URL ของ Google Apps Script');
+    }
+
+    const payload = {
+        action,
+        data,
+        token: sessionStorage.getItem('or_token') || ''
+    };
+
+    const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+    });
+
+    const text = await response.text();
+    if (!response.ok) {
+        throw new Error('API HTTP Error ' + response.status + ': ' + text.slice(0, 200));
+    }
+    let result;
+    try {
+        result = JSON.parse(text);
+    } catch (err) {
+        throw new Error('API ตอบกลับไม่ใช่ JSON: ' + text.slice(0, 200));
+    }
+
+    if (result && result.success === false && result.message === 'UNAUTHORIZED') {
+        throw new Error('เซสชันหมดอายุหรือยังไม่ได้เข้าสู่ระบบ');
+    }
+    return result;
+}
+
+async function testApiConnection(){
+    const btn = document.querySelector('.btn-api-test');
+    const box = document.getElementById('api-test-result');
+    if(!box || !btn) return;
+
+    btn.disabled = true;
+    box.textContent = '⏳ กำลังทดสอบ API...';
+    box.style.color = '#6B7280';
+
+    try{
+        const started = performance.now();
+        const result = await apiCall('ping');
+        const ms = Math.round(performance.now() - started);
+
+        if(result && result.success){
+            box.innerHTML = '✅ API เชื่อมต่อสำเร็จ · ' + ms + ' ms';
+            box.style.color = '#15803D';
+        }else{
+            throw new Error((result && result.message) || 'API ไม่ตอบกลับตามรูปแบบที่คาดไว้');
+        }
+    }catch(err){
+        box.textContent = '❌ เชื่อมต่อ API ไม่สำเร็จ: ' + (err.message || err);
+        box.style.color = '#B91C1C';
+        console.error('API TEST:', err);
+    }finally{
+        btn.disabled = false;
+    }
+}
+
+let appointments = [];
+let pendingImports = [];
+let currentId = -1;
+let currentIncomingId = null;
+const todayStr = new Date().toLocaleDateString('sv-SE');
+let selectedDate = todayStr;
+let currentFilterDate = todayStr;
+let currentCalendarDate = todayStr;
+let calendar = null;
+let mobileCalendar = null;
+let activeMobileView = 'home';
+const DOCTOR_COLOR_PALETTE = [
+    '#E91E63', '#2196F3', '#FF9800', '#009688', '#9C27B0',
+    '#3F51B5', '#D32F2F', '#03A9F4', '#795548', '#607D8B',
+    '#8BC34A', '#C2185B', '#00796B', '#5D4037', '#455A64'
+];
+const doctorColorMap = {};
+
+function normalizeDateKey(value){
+    if(!value) return '';
+    if(value instanceof Date && !isNaN(value.getTime())){
+        return value.toLocaleDateString('sv-SE');
+    }
+    const text = value.toString().trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+    let match = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if(match){
+        let year = Number(match[3]);
+        if(year > 2400) year -= 543;
+        return `${year.toString().padStart(4, '0')}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+    }
+    match = text.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if(match){
+        let year = Number(match[1]);
+        if(year > 2400) year -= 543;
+        return `${year.toString().padStart(4, '0')}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+    }
+    const parsed = new Date(text);
+    return isNaN(parsed.getTime()) ? text : parsed.toLocaleDateString('sv-SE');
+}
+
+function sameDate(a, b){
+    return normalizeDateKey(a) === normalizeDateKey(b);
+}
+
+function sameMonth(dateValue, yearMonth){
+    return normalizeDateKey(dateValue).startsWith(yearMonth || '');
+}
+
+function rememberCalendarDate(dateValue){
+    const normalized = normalizeDateKey(dateValue);
+    if(normalized) currentCalendarDate = normalized;
+}
+
+function getCalendarInitialDate(){
+    return normalizeDateKey(currentCalendarDate || currentFilterDate || todayStr) || todayStr;
+}
+
+function normalizeDoctorKey(doctor){
+    return (doctor || '').toString().trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function getDoctorColor(doctor){
+    const key = normalizeDoctorKey(doctor) || 'unknown';
+    if(doctorColorMap[key]) return doctorColorMap[key];
+
+    const select = document.getElementById('p-doctor');
+    if(select){
+        Array.from(select.options).forEach((option, index) => {
+            const optionKey = normalizeDoctorKey(option.value || option.textContent);
+            if(optionKey && !doctorColorMap[optionKey]){
+                doctorColorMap[optionKey] = DOCTOR_COLOR_PALETTE[index % DOCTOR_COLOR_PALETTE.length];
+            }
+        });
+    }
+
+    if(!doctorColorMap[key]){
+        const assignedCount = Object.keys(doctorColorMap).length;
+        doctorColorMap[key] = DOCTOR_COLOR_PALETTE[assignedCount % DOCTOR_COLOR_PALETTE.length];
+    }
+    return doctorColorMap[key];
+}
+
+const THAI_HOLIDAYS = {
+    '2026-01-01': 'วันขึ้นปีใหม่',
+    '2026-01-02': 'วันหยุดพิเศษ',
+    '2026-03-03': 'วันมาฆบูชา',
+    '2026-04-06': 'วันจักรี',
+    '2026-04-13': 'วันสงกรานต์',
+    '2026-04-14': 'วันสงกรานต์',
+    '2026-04-15': 'วันสงกรานต์',
+    '2026-05-01': 'วันแรงงานแห่งชาติ',
+    '2026-05-04': 'วันฉัตรมงคล',
+    '2026-05-13': 'วันพืชมงคล',
+    '2026-06-01': 'ชดเชยวันวิสาขบูชา',
+    '2026-06-03': 'วันเฉลิมพระชนมพรรษาสมเด็จพระราชินี',
+    '2026-07-28': 'วันเฉลิมพระชนมพรรษา ร.10',
+    '2026-07-29': 'วันอาสาฬหบูชา',
+    '2026-07-30': 'วันเข้าพรรษา',
+    '2026-08-12': 'วันแม่แห่งชาติ',
+    '2026-10-13': 'วันนวมินทรมหาราช',
+    '2026-10-23': 'วันปิยมหาราช',
+    '2026-12-07': 'ชดเชยวันพ่อแห่งชาติ',
+    '2026-12-10': 'วันรัฐธรรมนูญ',
+    '2026-12-31': 'วันสิ้นปี'
+};
+
+function formatDateKey(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function getThaiHolidayEvents(){
+    return Object.entries(THAI_HOLIDAYS).map(([date, title]) => ({
+        id: `holiday-${date}`,
+        title,
+        start: date,
+        allDay: true,
+        backgroundColor: '#FEE2E2',
+        borderColor: '#FCA5A5',
+        textColor: '#991B1B',
+        classNames: ['thai-holiday-event'],
+        extendedProps: { type: 'holiday' }
+    }));
+}
+
+function showToast(text){
+    const toast = document.getElementById('toast');
+    toast.innerHTML = text;
+    toast.classList.add('show');
+    setTimeout(()=>{
+        toast.classList.remove('show');
+    },2500);
+}
+
+function loadPatientHistory(){
+    const name = document.getElementById('p-name').value.trim();
+
+    if(!name) return;
+
+    apiCall('getPatientHistory', { name })
+    .then((res)=>{
+        if(!res) return;
+        if(res.cid && !document.getElementById('p-cid').value){
+            document.getElementById('p-cid').value = res.cid;
+        }
+        if(res.phone && !document.getElementById('p-phone').value){
+            document.getElementById('p-phone').value = res.phone.toString().replace(/^'/,'');
+        }
+    })
+    .catch(err => console.error('getPatientHistory:', err));
+}
+
+function login(){
+    const u = document.getElementById('username').value;
+    const p = document.getElementById('password').value;
+    apiCall('loginWithToken', { username: u, password: p })
+    .then((res)=>{
+        if(!res.success){
+            alert('Username หรือ Password ไม่ถูกต้อง');
+            return;
+        }
+        sessionStorage.setItem('or_token', res.token);
+        document.getElementById('login-page').classList.add('hidden');
+        showAppShell();
+        fetchData();
+        showToast('เข้าสู่ระบบสำเร็จ');
+    })
+    .catch(err => alert(err.message || 'เข้าสู่ระบบไม่สำเร็จ'));
+}
+
+function logout(){
+    sessionStorage.removeItem('or_token');
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('main-page').classList.add('hidden');
+    document.getElementById('dashboard-page').classList.add('hidden');
+    document.getElementById('mobile-app').classList.add('hidden');
+    document.getElementById('login-page').classList.remove('hidden');
+    showToast('ออกจากระบบเรียบร้อยแล้ว');
+}
+
+window.onload=()=>{
+    applyDeviceMode();
+    const token = sessionStorage.getItem('or_token');
+    if(token){
+        document.getElementById('login-page').classList.add('hidden');
+        showAppShell();
+        fetchData();
+    }
+};
+
+window.addEventListener('resize', ()=>{
+    applyDeviceMode();
+    if(sessionStorage.getItem('or_token')){
+        showAppShell();
+    }
+});
+
+function isMobileViewport(){
+    const ua = navigator.userAgent || '';
+    const isPhoneLike = /iPhone|iPod|Android.*Mobile|Windows Phone/i.test(ua);
+    const isTouchSmallScreen = navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) <= 1024;
+    const isNarrowViewport = window.matchMedia('(max-width:900px)').matches;
+    return isPhoneLike || (isTouchSmallScreen && isNarrowViewport) || window.innerWidth <= 900;
+}
+
+function applyDeviceMode(){
+    document.body.classList.toggle('mobile-mode', isMobileViewport());
+}
+
+function showAppShell(){
+    applyDeviceMode();
+    if(isMobileViewport()){
+        document.getElementById('main-page').classList.add('hidden');
+        document.getElementById('dashboard-page').classList.add('hidden');
+        document.getElementById('mobile-app').classList.remove('hidden');
+        showMobileView(activeMobileView || 'home');
+    } else {
+        document.getElementById('mobile-app').classList.add('hidden');
+        document.getElementById('dashboard-page').classList.add('hidden');
+        document.getElementById('main-page').classList.remove('hidden');
+        setTimeout(()=>{ if(calendar) calendar.updateSize(); }, 50);
+    }
+}
+
+function showMainPage(){
+    document.getElementById('mobile-app').classList.add('hidden');
+    document.getElementById('dashboard-page').classList.add('hidden');
+    document.getElementById('main-page').classList.remove('hidden');
+    setTimeout(()=>{ if(calendar) calendar.updateSize(); }, 50);
+}
+
+function showDashboardPage(){
+    document.getElementById('mobile-app').classList.add('hidden');
+    document.getElementById('main-page').classList.add('hidden');
+    document.getElementById('dashboard-page').classList.remove('hidden');
+    renderDashboard();
+}
+
+function countBy(items, getter){
+    return items.reduce((acc, item) => {
+        const key = (getter(item) || '').toString().trim() || 'ไม่ระบุ';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+    }, {});
+}
+
+function renderDashboard(){
+    if(!Array.isArray(appointments)) return;
+
+    const targetYearMonth = (currentFilterDate || todayStr).substring(0, 7);
+    const monthCases = appointments.filter(a => sameMonth(a.date, targetYearMonth));
+    const todayCases = appointments.filter(a => sameDate(a.date, todayStr));
+    const doctorCounts = countBy(monthCases, a => a.doctor);
+    const procCounts = countBy(monthCases, a => {
+        const proc = (a.procedure || '').trim();
+        return proc.toUpperCase().startsWith('TKA') ? 'TKA' : proc;
+    });
+
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if(el) el.innerText = value;
+    };
+
+    setText('dash-month-total', monthCases.length);
+    setText('dash-today-total', todayCases.length);
+    setText('dash-doctor-total', Object.keys(doctorCounts).length);
+    setText('dash-procedure-total', Object.keys(procCounts).length);
+
+    const renderCountList = (id, counts) => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        const rows = Object.keys(counts).sort((a,b)=>counts[b]-counts[a] || a.localeCompare(b));
+        if(rows.length === 0){
+            el.innerHTML = '<div class="dashboard-row"><span>ไม่มีข้อมูล</span><strong>0</strong></div>';
+            return;
+        }
+        el.innerHTML = rows.map(key => `<div class="dashboard-row"><span>${key}</span><strong>${counts[key]} ราย</strong></div>`).join('');
+    };
+
+    renderCountList('dash-doctor-list', doctorCounts);
+    renderCountList('dash-procedure-list', procCounts);
+
+    const upcomingEl = document.getElementById('dash-upcoming-list');
+    if(upcomingEl){
+        const start = new Date(todayStr);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 7);
+        const upcoming = appointments
+            .filter(a => {
+                if(!a.date) return false;
+                const d = new Date(a.date);
+                return d >= start && d <= end;
+            })
+            .sort((a,b)=>a.date.localeCompare(b.date) || (a.doctor || '').localeCompare(b.doctor || ''));
+
+        if(upcoming.length === 0){
+            upcomingEl.innerHTML = '<div class="dashboard-row"><span>ไม่มีเคสใกล้ถึงนัด</span><strong>0 ราย</strong></div>';
+        } else {
+            upcomingEl.innerHTML = upcoming.map(a => `
+                <div class="dashboard-row">
+                    <span>${a.date} · ${a.name || '-'}<br><small>${a.doctor || '-'} · ${a.procedure || '-'}</small></span>
+                    <strong>${a.phone ? `<a href="tel:${a.phone}" style="color:var(--primary);text-decoration:none;">${a.phone}</a>` : '-'}</strong>
+                </div>
+            `).join('');
+        }
+    }
+}
+
+function showMobileView(view){
+    activeMobileView = 'home';
+    ['home'].forEach(name => {
+        const section = document.getElementById(`mobile-${name}-view`);
+        const nav = document.getElementById(`mobile-nav-${name}`);
+        if(section) section.classList.toggle('active', true);
+        if(nav) nav.classList.toggle('active', true);
+    });
+
+    renderMobileApp();
+    setTimeout(renderMobileCalendar, 50);
+}
+
+function openMobileAddCase(dateStr){
+    if(dateStr) currentFilterDate = dateStr;
+    if(!currentFilterDate) currentFilterDate = todayStr;
+    rememberCalendarDate(currentFilterDate);
+    calculateDateStats(currentFilterDate);
+    renderMobileApp();
+    openModal();
+}
+
+function getTelHref(phone){
+    const cleaned = (phone || '').toString().replace(/[^\d+]/g, '');
+    return cleaned ? `tel:${cleaned}` : '';
+}
+
+function callMobilePhone(event, phone){
+    if(event){
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    const telHref = getTelHref(phone);
+    if(!telHref){
+        showToast('ไม่มีเบอร์โทรศัพท์');
+        return false;
+    }
+    try {
+        window.top.location.href = telHref;
+    } catch (e) {
+        window.location.href = telHref;
+    }
+    setTimeout(()=>{ window.location.href = telHref; }, 80);
+    return false;
+}
+
+function selectMobileDate(dateStr){
+    if(!dateStr) return;
+    currentFilterDate = dateStr;
+    rememberCalendarDate(currentFilterDate);
+    calculateDateStats(currentFilterDate);
+    clearMobileSearch(false);
+    renderMobileApp();
+}
+
+function renderMobileCaseList(elementId, cases) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    if (cases.length === 0) {
+        el.innerHTML = '<div class="no-data" style="text-align:center; padding:30px; color:var(--muted); font-size:14px;">ไม่มีเคสนัดหมายในวันที่เลือก</div>';
+        return;
+    }
+    
+    el.innerHTML = cases.map(a => `
+        <div class="mobile-case" onclick="editData('${a.rowId}')" style="cursor: pointer; background: #ffffff; padding: 14px; margin-bottom: 12px; border-radius: 16px; border-left: 6px solid var(--primary); box-shadow: 0 3px 10px rgba(0,0,0,0.04); display: block; -webkit-tap-highlight-color: transparent;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <div style="font-weight: 700; font-size: 16px; color: var(--text);">${escapeHtml(a.name)}</div>
+                <span style="color: var(--primary); font-size: 11px; font-weight: bold; background: #E6F4F0; padding: 3px 10px; border-radius: 20px; border: 1px solid rgba(23,76,60,0.15); white-space: nowrap;">แก้ไข/ลบ ⚙️</span>
+            </div>
+            
+            <div style="font-size: 13px; color: var(--muted); margin-bottom: 10px; line-height: 1.4;">
+                <div style="margin-bottom: 2px;"><b>หัตถการ:</b> ${escapeHtml(a.procedure || '-')}</div>
+                <div><b>แพทย์ผู้จอง:</b> ${escapeHtml(a.doctor || '-')}</div>
+            </div>
+            
+            ${a.phone ? `
+            <div style="border-top: 1px dashed #E5E7EB; padding-top: 10px; margin-top: 4px;" onclick="event.stopPropagation();">
+                <button type="button" onclick="window.top.location.href='tel:${a.phone.trim()}';" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #10B981; color: #ffffff; border: none; font-weight: bold; font-size: 16px; padding: 12px 14px; border-radius: 12px; box-shadow: 0 4px 12px rgba(16,185,129,0.2); width: 100%; cursor: pointer; -webkit-tap-highlight-color: transparent;">
+                    <span>📞 โทรออกได้ทันที: ${a.phone}</span>
+                </button>
+            </div>
+            ` : `
+            <div style="border-top: 1px dashed #E5E7EB; padding-top: 8px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: var(--muted);">📞 เบอร์โทรศัพท์:</span>
+                <span style="font-size: 13px; color: #9CA3AF; font-style: italic;">ไม่ได้ระบุเบอร์โทร</span>
+            </div>
+            `}
+        </div>
+    `).join('');
+}
+
+function renderMobileSummaryList(containerId, counts){
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    const keys = Object.keys(counts).sort((a,b)=>counts[b]-counts[a] || a.localeCompare(b));
+    if(keys.length === 0){
+        el.innerHTML = '<div class="mobile-summary-row"><span>ไม่มีข้อมูล</span><strong>0</strong></div>';
+        return;
+    }
+    el.innerHTML = keys.map(key => `
+        <div class="mobile-summary-row"><span>${key}</span><strong>${counts[key]} ราย</strong></div>
+    `).join('');
+}
+
+function renderMobileApp(){
+    if(!isMobileViewport()) return;
+
+    const targetYearMonth = (currentFilterDate || todayStr).substring(0, 7);
+    const monthCases = appointments.filter(a => sameMonth(a.date, targetYearMonth));
+    const selectedDate = currentFilterDate || todayStr;
+    const selectedCases = appointments
+        .filter(a => sameDate(a.date, selectedDate))
+        .sort((a,b)=>(a.doctor || '').localeCompare(b.doctor || '') || (a.name || '').localeCompare(b.name || ''));
+    const dateLabel = document.getElementById('mobile-date-label');
+    if(dateLabel) dateLabel.innerText = `วันที่เลือก ${selectedDate}`;
+
+    const monthTotal = document.getElementById('mobile-month-total');
+    const dayTotal = document.getElementById('mobile-day-total');
+    if(monthTotal) monthTotal.innerText = monthCases.length;
+    if(dayTotal) dayTotal.innerText = selectedCases.length;
+
+    const selectedTitle = document.getElementById('mobile-selected-date-title');
+    if(selectedTitle) selectedTitle.innerText = `เคสวันที่ ${selectedDate}`;
+    renderMobileCaseList('mobile-selected-list', selectedCases);
+}
+
+function handleMobileSearch(q){
+    const keyword = normalizeText(q);
+    const selectedTitle = document.getElementById('mobile-selected-date-title');
+    const dayTotal = document.getElementById('mobile-day-total');
+
+    if(keyword === ''){
+        renderMobileApp();
+        return;
+    }
+
+    const filtered = appointments
+        .filter(a => {
+            const fields = [a.name, a.cid, a.doctor, a.procedure, a.phone, a.date];
+            return fields.some(field => normalizeText(field).includes(keyword));
+        })
+        .sort((a,b)=>(a.date || '').localeCompare(b.date || '') || (a.name || '').localeCompare(b.name || ''));
+
+    if(selectedTitle) selectedTitle.innerText = `ผลการค้นหา "${q}"`;
+    if(dayTotal) dayTotal.innerText = filtered.length;
+    renderMobileCaseList('mobile-selected-list', filtered);
+}
+
+function clearMobileSearch(shouldRender = true){
+    const searchBox = document.getElementById('mobile-search-box');
+    if(searchBox) searchBox.value = '';
+    if(shouldRender) renderMobileApp();
+}
+
+function loadPendingImports(){
+    const list = document.getElementById('incoming-list');
+    if(list) list.innerHTML = '<div class="incoming-empty">กำลังโหลดรายการรอตรวจสอบ...</div>';
+    apiCall('getPendingImports')
+    .then((data)=>{
+        pendingImports = Array.isArray(data) ? data : [];
+        renderPendingImports();
+    })
+    .catch((err)=>{
+        if(list) list.innerHTML = '<div class="incoming-empty">โหลดรายการไม่สำเร็จ</div>';
+        alert(err && err.message ? err.message : 'โหลดรายการไม่สำเร็จ');
+    });
+}
+
+function openPendingImports(){
+    loadPendingImports();
+    setTimeout(()=>{
+        const panel = document.querySelector('.incoming-panel');
+        if(panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+}
+
+function renderPendingImports(){
+    const count = document.getElementById('incoming-count');
+    if(count) count.innerText = pendingImports.length;
+    const list = document.getElementById('incoming-list');
+    if(!list) return;
+    if(!pendingImports.length){
+        list.innerHTML = '<div class="incoming-empty">ไม่มีรายการรอตรวจสอบจาก OR Queue</div>';
+        return;
+    }
+    list.innerHTML = pendingImports.map(item => `
+        <div class="incoming-item">
+            <div>
+                <b>${escapeHtml(item.name || '-')}</b>
+                <small>วันที่นัด: ${escapeHtml(item.date || '-')} | เวลา: ${escapeHtml(item.operationTime || '-')}</small>
+                <small>HN: ${escapeHtml(item.hn || '-')} | CID: ${escapeHtml(item.cid || '-')} | โทร: ${escapeHtml(item.phone || '-')}</small>
+            </div>
+            <div>
+                <b>${escapeHtml(item.procedure || '-')}</b>
+                <small>แพทย์: ${escapeHtml(item.doctor || '-')}</small>
+                <small>สิทธิ: ${escapeHtml(item.coverage || '-')}</small>
+            </div>
+            <div class="incoming-actions">
+                <button type="button" class="btn btn-success incoming-review-btn" data-incoming-id="${escapeHtml(item.incomingId)}">ตรวจสอบ</button>
+                <button type="button" class="btn btn-danger incoming-reject-btn" data-incoming-id="${escapeHtml(item.incomingId)}">ปฏิเสธ</button>
+            </div>
+        </div>
+    `).join('');
+    document.querySelectorAll('.incoming-review-btn').forEach(button => {
+        button.addEventListener('click', function(event){
+            event.preventDefault();
+            event.stopPropagation();
+            reviewPendingImport(this.dataset.incomingId);
+        });
+    });
+    document.querySelectorAll('.incoming-reject-btn').forEach(button => {
+        button.addEventListener('click', function(event){
+            event.preventDefault();
+            event.stopPropagation();
+            rejectImport(this.dataset.incomingId);
+        });
+    });
+}
+
+function reviewPendingImport(incomingId){
+    const item = pendingImports.find(x => x.incomingId === incomingId);
+    if(!item){
+        alert('ไม่พบรายการที่เลือก');
+        return;
+    }
+    const procedureForReview = isInvalidProcedureValue(item.procedure) ? '' : item.procedure;
+    currentIncomingId = incomingId;
+    currentId = -1;
+    openModal({
+        date: item.date,
+        name: item.name,
+        cid: item.cid,
+        phone: item.phone,
+        doctor: item.doctor,
+        procedure: procedureForReview
+    }, -1);
+    const title = document.querySelector('#modal .modal-title');
+    if(title) title.innerText = 'ตรวจสอบรายการจาก OR Queue';
+    const saveBtn = document.querySelector('#modal .btn-save');
+    if(saveBtn){
+        saveBtn.innerText = 'ยืนยันลง Calendar';
+        saveBtn.onclick = approveCurrentImport;
+    }
+    document.getElementById('delete-btn').classList.add('hidden');
+    if(!procedureForReview){
+        document.getElementById('p-proc-select').value = 'อื่นๆ';
+        handleProcChange('อื่นๆ');
+        document.getElementById('p-proc-custom').value = '';
+        alert('รายการนี้มีหัตถการผิดรูปแบบ กรุณากรอกหัตถการใหม่ก่อนยืนยัน');
+    }
+}
+
+function resetModalSaveMode(){
+    currentIncomingId = null;
+    const title = document.querySelector('#modal .modal-title');
+    if(title) title.innerText = '📝 ข้อมูลนัดหมายผ่าตัด';
+    const saveBtn = document.querySelector('#modal .btn-save');
+    if(saveBtn){
+        saveBtn.innerText = 'บันทึกข้อมูล';
+        saveBtn.onclick = saveData;
+    }
+}
+
+function collectModalAppointment(){
+    let procVal = document.getElementById('p-proc-select').value;
+    let finalProc = procVal;
+    if(procVal === 'TKA') {
+        const radios = document.getElementsByName('tka-side');
+        let side = 'L';
+        for(let r of radios) { if(r.checked) side = r.value; }
+        finalProc = `TKA-${side}`;
+    } else if(procVal === 'อื่นๆ') {
+        finalProc = document.getElementById('p-proc-custom').value;
+    }
+    return {
+        date: document.getElementById('p-date').value,
+        name: document.getElementById('p-name').value,
+        cid: document.getElementById('p-cid').value,
+        doctor: document.getElementById('p-doctor').value,
+        procedure: finalProc,
+        phone: document.getElementById('p-phone').value
+    };
+}
+
+function isInvalidProcedureValue(value){
+    const text = (value ?? '').toString().trim();
+    if(!text) return true;
+    if(/^\d{4}-\d{1,2}-\d{1,2}$/.test(text)) return true;
+    if(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(text)) return true;
+    if(/^\d{1,2}[.:]\d{2}\s*[-–]\s*\d{1,2}[.:]\d{2}$/.test(text)) return true;
+    if(/^[0-9\s,()\-]+$/.test(text)) return true;
+    return false;
+}
+
+function approveCurrentImport(){
+    if(!currentIncomingId){
+        saveData();
+        return;
+    }
+    const obj = collectModalAppointment();
+    if(!obj.date || !obj.name || isInvalidProcedureValue(obj.procedure)){
+        alert('กรุณาตรวจสอบวันที่ ชื่อ และหัตถการก่อนยืนยัน');
+        return;
+    }
+    apiCall('approvePendingImport', { incomingId: currentIncomingId, edited: obj })
+    .then((res)=>{
+        if(!res.success){ alert(res.message || 'ยืนยันไม่สำเร็จ'); return; }
+        resetModalSaveMode();
+        closeModal();
+        fetchData();
+        loadPendingImports();
+        showToast('ยืนยันรายการจาก OR Queue แล้ว');
+    })
+    .catch((err)=>alert(err && err.message ? err.message : 'ยืนยันไม่สำเร็จ'));
+}
+
+function rejectImport(incomingId){
+    const note = prompt('ระบุเหตุผลที่ปฏิเสธรายการนี้', '');
+    if(note === null) return;
+    apiCall('rejectPendingImport', { incomingId, note })
+    .then((res)=>{
+        if(!res.success){ alert(res.message || 'ปฏิเสธไม่สำเร็จ'); return; }
+        loadPendingImports();
+        showToast('ปฏิเสธรายการแล้ว');
+    })
+    .catch((err)=>alert(err && err.message ? err.message : 'ปฏิเสธไม่สำเร็จ'));
+}
+
+function getCalendarEvents(){
+    return [...appointments.map(a => {
+        const bgColor = getDoctorColor(a.doctor);
+        return {
+            id: a.rowId.toString(),
+            title: `${a.name} (${a.procedure})`,
+            start: normalizeDateKey(a.date),
+            backgroundColor: bgColor,
+            borderColor: bgColor
+        };
+    }), ...getThaiHolidayEvents()];
+}
+
+function renderMobileCalendar(){
+    const calendarEl = document.getElementById('mobile-calendar');
+    if(!calendarEl) return;
+    if(mobileCalendar) mobileCalendar.destroy();
+
+    mobileCalendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'th',
+        initialView: 'dayGridMonth',
+        initialDate: getCalendarInitialDate(),
+        height: 'auto',
+        headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+        datesSet: function(info) {
+            rememberCalendarDate(info.view.currentStart);
+        },
+        dayCellClassNames: function(arg) {
+            return THAI_HOLIDAYS[formatDateKey(arg.date)] ? ['thai-holiday-day'] : [];
+        },
+        events: getCalendarEvents(),
+        eventClick: function(info) {
+            if(info.event.extendedProps.type === 'holiday') {
+                selectMobileDate(info.event.startStr);
+                return;
+            }
+            editData(info.event.id);
+        },
+        dateClick: function(info) {
+            const target = info.jsEvent.target;
+            const clickedNumber = target.classList.contains('fc-daygrid-day-number') || target.closest('.fc-daygrid-day-number');
+            if(clickedNumber){
+                openMobileAddCase(info.dateStr);
+            } else {
+                selectMobileDate(info.dateStr);
+            }
+        }
+    });
+    mobileCalendar.render();
+}
+
+function fetchData(){
+    apiCall('getAppointmentsFast')
+    .then((data)=>{
+        appointments = Array.isArray(data) ? data.map(item => ({ 
+            ...item, 
+            rowId: item.rowId ? item.rowId.toString() : '-1',
+            date: normalizeDateKey(item.date),
+            name: item.name ? item.name.toString() : '',
+            cid: item.cid ? item.cid.toString() : '',
+            doctor: item.doctor ? item.doctor.toString() : '',
+            procedure: item.procedure ? item.procedure.toString() : '',
+            phone: item.phone ? item.phone.toString() : ''})) : [];
+        const filtered = appointments.filter(a => sameDate(a.date, currentFilterDate));
+        renderTable(filtered);
+        calculateDateStats(currentFilterDate);
+        initCalendar();
+        renderDashboard();
+        renderMobileApp();
+        if(isMobileViewport()) renderMobileCalendar();
+        loadPendingImports();
+    })
+    .catch((err)=>{
+        console.error(err);
+        if((err.message || '').toUpperCase().includes('UNAUTHORIZED')) logout();
+        else alert(err.message || 'โหลดข้อมูลไม่สำเร็จ');
+    });
+}
+
+function calculateDateStats(targetDate) {
+    document.getElementById('current-selected-date-label').innerText = `ประจำวันที่: ${targetDate}`;
+    const dayCases = appointments.filter(a => sameDate(a.date, targetDate));
+    document.getElementById('date-case-count').innerText = dayCases.length;
+
+    const targetYearMonth = (targetDate || todayStr).substring(0, 7);
+    const monthCases = appointments.filter(a => sameMonth(a.date, targetYearMonth));
+    const monthCountEl = document.getElementById('month-case-count');
+    const monthLabelEl = document.getElementById('current-selected-month-label');
+    if(monthCountEl){
+        monthCountEl.innerText = monthCases.length;
+    }
+    if(monthLabelEl){
+        monthLabelEl.innerText = `ประจำเดือน: ${targetYearMonth}`;
+    }
+    
+    let counts = {};
+    dayCases.forEach(c => {
+        let pName = (c.procedure || '').trim();
+        if(pName === '') pName = 'ไม่ระบุ';
+        if (pName.toUpperCase().startsWith('TKA')) pName = 'TKA';
+        counts[pName] = (counts[pName] || 0) + 1;
+    });
+    
+    const container = document.getElementById('proc-stats-container');
+    let html = '';
+    if(Object.keys(counts).length === 0) {
+        html = '<span style="color:var(--muted); font-size:14px;">ไม่มีหัตถการในวันนี้</span>';
+    } else {
+        for (let key in counts) {
+            html += `<div class="proc-badge">${key} <span>${counts[key]} เคส</span></div>`;
+        }
+    }
+    container.innerHTML = html;
+}
+
+function renderTable(data){
+    const tbody = document.getElementById('app-list');
+    if(!data || data.length === 0){
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">ไม่มีข้อมูลนัดหมาย</td></tr>`;
+        return;
+    }
+
+    const groups = {};
+    data.forEach(a => {
+        const doctor = (a.doctor || '').trim() || 'ไม่ระบุแพทย์';
+        if(!groups[doctor]) groups[doctor] = [];
+        groups[doctor].push(a);
+    });
+
+    const doctorNames = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+    tbody.innerHTML = doctorNames.map(doctor => {
+        const rows = groups[doctor].map((a,index)=>`
+            <tr onclick="editData('${a.rowId}')" style="cursor:pointer">
+                <td data-label="#">${index+1}</td>
+                <td data-label="ชื่อผู้ป่วย"><b>${a.name || ''}</b><br><small style="color:var(--muted); font-size:11px;">📅 วันนัด: ${a.date || ''}</small></td>
+                <td data-label="CID">${a.cid || ''}</td>
+                <td data-label="แพทย์ผู้ตรวจ">${a.doctor || ''}</td>
+                <td data-label="หัตถการ"><span style="font-weight:600; color:var(--primary-soft);">${a.procedure || ''}</span></td>
+                <td data-label="เบอร์โทรศัพท์"><a href="tel:${a.phone}" onclick="event.stopPropagation();" style="color:var(--primary-soft); text-decoration:none;">📞 ${a.phone || '-'}</a></td>
+            </tr>
+        `).join('');
+
+        return `
+            <tr class="doctor-group-row"><td colspan="6">${doctor} (${groups[doctor].length} ราย)</td></tr>
+            ${rows}
+        `;
+    }).join('');
+}
+
+function printMonthlySummary() {
+    if (!appointments || appointments.length === 0) {
+        alert('ไม่มีข้อมูลที่จะพิมพ์รายงาน');
+        return;
+    }
+    const targetYearMonth = currentFilterDate.substring(0, 7);
+    const monthlyData = appointments.filter(a => sameMonth(a.date, targetYearMonth));
+    if (monthlyData.length === 0) {
+        alert('ไม่พบข้อมูลหัตถการในเดือนนี้');
+        return;
+    }
+
+    const escapeHtml = (value) => (value ?? '').toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const formatThaiDate = (dateStr) => {
+        const parts = (dateStr || '').split('-');
+        if(parts.length !== 3) return dateStr || 'ไม่ระบุวันที่';
+        const year = Number(parts[0]) + 543;
+        return `${parts[2]}/${parts[1]}/${year}`;
+    };
+
+    const daySummary = {};
+    monthlyData.forEach(a => {
+        const date = a.date || 'ไม่ระบุวันที่';
+        const proc = (a.procedure || '').trim() || 'ไม่ระบุหัตถการ';
+        if(!daySummary[date]) daySummary[date] = { total: 0, procedures: {} };
+        daySummary[date].total += 1;
+        daySummary[date].procedures[proc] = (daySummary[date].procedures[proc] || 0) + 1;
+    });
+
+    const rows = Object.keys(daySummary)
+        .sort((a, b) => a.localeCompare(b))
+        .map(date => ({ date, ...daySummary[date] }));
+
+    const total = rows.reduce((sum, row) => sum + row.total, 0);
+    const printWindow = window.open('', '_blank');
+    const html = `
+        <html>
+        <head>
+            <title>สรุปหัตถการรายเดือน ${escapeHtml(targetYearMonth)}</title>
+            <style>
+                body { font-family: 'Sarabun', Arial, sans-serif; padding: 16px; color: #000; font-size: 11px; }
+                h2 { text-align: center; margin: 0 0 4px; font-size: 16px; }
+                .meta { text-align: center; font-size: 11px; margin-bottom: 10px; }
+                table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                th, td { border: 1px solid #111; padding: 8px 10px; vertical-align: middle; }
+                th { background: #F1F5F9; font-size: 12px; text-align: center; font-weight: 800; }
+                td.date-cell { width: 18%; text-align: center; font-size: 12px; }
+                td.summary-cell { width: 64%; }
+                td.total-cell { width: 18%; text-align: center; font-size: 13px; font-weight: 800; }
+                .proc-badge { display: inline-block; border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 4px; padding: 3px 6px; margin: 2px 3px 2px 0; font-size: 11px; }
+                .grand-total td { background: #F8FAFC; font-weight: 800; }
+                @media print { body { padding: 6px; } }
+            </style>
+        </head>
+        <body>
+            <h2>สรุปหัตถการรายเดือน</h2>
+            <div class="meta">ประจำเดือน: ${escapeHtml(targetYearMonth)} | รวมทั้งหมด ${total} ราย</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:18%;">วันที่</th>
+                        <th style="width:64%;">สรุปหัตถการ</th>
+                        <th style="width:18%;">รวม (ราย)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.map(row => `
+                        <tr>
+                            <td class="date-cell">${escapeHtml(formatThaiDate(row.date))}</td>
+                            <td class="summary-cell">
+                                ${Object.keys(row.procedures).sort((a, b) => a.localeCompare(b)).map(proc => `
+                                    <span class="proc-badge">${escapeHtml(proc)}: ${row.procedures[proc]}</span>
+                                `).join('')}
+                            </td>
+                            <td class="total-cell">${row.total}</td>
+                        </tr>
+                    `).join('')}
+                    <tr class="grand-total">
+                        <td colspan="2" style="text-align:right;">รวมทั้งเดือน</td>
+                        <td class="total-cell">${total}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+    if(!printWindow){ alert('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ กรุณาอนุญาต popup'); return; }
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    setTimeout(function() { printWindow.print(); printWindow.close(); }, 300);
+}
+
+function normalizeText(value){
+    return (value ?? '').toString().toLowerCase().trim();
+}
+
+function escapeHtml(value) {
+    return (value ?? '').toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function editData(rowId){
+    const targetId = (rowId ?? '').toString();
+    const app = appointments.find(a => (a.rowId ?? '').toString() === targetId);
+    if(!app){
+        showToast('ไม่พบข้อมูลผู้ป่วยที่เลือก');
+        return;
+    }
+    openModal(app, targetId);
+}
+
+function handleSearch(q){
+    const keyword = normalizeText(q);
+    if(keyword === ''){
+        const baseData = appointments.filter(a => sameDate(a.date, currentFilterDate));
+        renderTable(baseData);
+        return;
+    }
+    const filtered = appointments.filter(a => {
+        const fields = [a.name, a.cid, a.doctor, a.procedure, a.phone, a.date];
+        return fields.some(field => normalizeText(field).includes(keyword));
+    });
+    renderTable(filtered);
+}
+
+function initCalendar(){
+    const calendarEl = document.getElementById('calendar');
+    if(calendar) calendar.destroy();
+    
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'th',
+        initialView: 'dayGridMonth',
+        initialDate: getCalendarInitialDate(),
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
+        datesSet: function(info) {
+            rememberCalendarDate(info.view.currentStart);
+        },
+        dayCellClassNames: function(arg) {
+            return THAI_HOLIDAYS[formatDateKey(arg.date)] ? ['thai-holiday-day'] : [];
+        },
+        events: getCalendarEvents(),
+        eventClick: function(info) {
+            if(info.event.extendedProps.type === 'holiday'){
+                currentFilterDate = info.event.startStr;
+                rememberCalendarDate(currentFilterDate);
+                const filtered = appointments.filter(a => sameDate(a.date, currentFilterDate));
+                renderTable(filtered);
+                calculateDateStats(currentFilterDate);
+                return;
+            }
+            editData(info.event.id);
+        },
+        dateClick: function(info) {
+            currentFilterDate = info.dateStr;
+            rememberCalendarDate(currentFilterDate);
+            const filtered = appointments.filter(a => sameDate(a.date, currentFilterDate));
+            renderTable(filtered);
+            calculateDateStats(currentFilterDate);
+            if(document.getElementById('print-date-sub')){
+                document.getElementById('print-date-sub').innerText = `ข้อมูล ณ วันที่: ${currentFilterDate}`;
+            }
+            const target = info.jsEvent.target;
+            const isClickOnNumber = target.classList.contains('fc-daygrid-day-number') || target.closest('.fc-daygrid-day-number');
+            if (isClickOnNumber) {
+                openModal(null, -1);
+                const dateInput = document.getElementById('p-date');
+                if(dateInput) { dateInput.value = info.dateStr; }
+            }
+        }
+    });
+    calendar.render();
+}
+
+function openModal(app = null, id = -1) {
+    currentId = id;
+    document.getElementById('overlay').classList.remove('hidden');
+    document.getElementById('modal').classList.remove('hidden');
+    
+    if(app) {
+        document.getElementById('p-date').value = app.date;
+        document.getElementById('p-name').value = app.name;
+        document.getElementById('p-cid').value = app.cid;
+        document.getElementById('p-phone').value = app.phone;
+        
+        const selectDoc = document.getElementById('p-doctor');
+        const savedDoctor = (app.doctor || '').trim().replace(/\s+/g, '').toLowerCase();
+        let docMatched = false;
+        for(let i=0; i<selectDoc.options.length; i++){
+            let optVal = selectDoc.options[i].value.replace(/\s+/g, '').toLowerCase();
+            if(optVal.includes(savedDoctor) || savedDoctor.includes(optVal)){
+                selectDoc.selectedIndex = i; docMatched = true; break;
+            }
+        }
+        if(!docMatched) selectDoc.selectedIndex = 0;
+        
+        const selectProc = document.getElementById('p-proc-select');
+        let pName = (app.procedure || '').trim();
+        if(pName.toUpperCase().startsWith('TKA')) {
+            selectProc.value = 'TKA';
+            handleProcChange('TKA');
+            let side = pName.replace('TKA-', '').trim();
+            const radios = document.getElementsByName('tka-side');
+            for(let r of radios) { if(r.value === side) r.checked = true; }
+        } else {
+            let found = false;
+            for(let i=0; i<selectProc.options.length; i++) {
+                if(selectProc.options[i].value === pName) { selectProc.value = pName; found = true; break; }
+            }
+            if(found) {
+                handleProcChange(pName);
+            } else {
+                selectProc.value = 'อื่นๆ'; handleProcChange('อื่นๆ');
+                document.getElementById('p-proc-custom').value = pName;
+            }
+        }
+        document.getElementById('delete-btn').classList.remove('hidden');
+    } else {
+        document.getElementById('p-date').value = currentFilterDate;
+        document.getElementById('p-name').value = '';
+        document.getElementById('p-cid').value = '';
+        document.getElementById('p-phone').value = '';
+        document.getElementById('p-doctor').selectedIndex = 0;
+        document.getElementById('p-proc-select').selectedIndex = 0;
+        handleProcChange('TKA');
+        document.getElementById('delete-btn').classList.add('hidden');
+    }
+}
+
+function closeModal() {
+    document.getElementById('overlay').classList.add('hidden');
+    document.getElementById('modal').classList.add('hidden');
+    resetModalSaveMode();
+}
+
+function handleProcChange(val) {
+    if(val === 'TKA') {
+        document.getElementById('tka-side-group').classList.remove('hidden');
+        document.getElementById('custom-proc-group').classList.add('hidden');
+    } else if(val === 'อื่นๆ') {
+        document.getElementById('tka-side-group').classList.add('hidden');
+        document.getElementById('custom-proc-group').classList.remove('hidden');
+    } else {
+        document.getElementById('tka-side-group').classList.add('hidden');
+        document.getElementById('custom-proc-group').classList.add('hidden');
+    }
+}
+
+function saveData() {
+    let procVal = document.getElementById('p-proc-select').value;
+    let finalProc = procVal;
+    if(procVal === 'TKA') {
+        const radios = document.getElementsByName('tka-side');
+        let side = 'L';
+        for(let r of radios) { if(r.checked) side = r.value; }
+        finalProc = `TKA-${side}`;
+    } else if(procVal === 'อื่นๆ') {
+        finalProc = document.getElementById('p-proc-custom').value;
+    }
+    
+    const obj = {
+        date: document.getElementById('p-date').value,
+        name: document.getElementById('p-name').value,
+        cid: document.getElementById('p-cid').value,
+        doctor: document.getElementById('p-doctor').value,
+        procedure: finalProc,
+        phone: document.getElementById('p-phone').value,
+        rowId: currentId
+    };
+    
+    if(!obj.date || !obj.name) { alert('กรุณากรอกวันที่และชื่อคนไข้'); return; }
+    
+    apiCall('saveToSheet', obj)
+    .then((res)=>{
+        if(!res.success){ alert(res.message); return; }
+        currentFilterDate = normalizeDateKey(obj.date);
+        rememberCalendarDate(currentFilterDate);
+        closeModal(); fetchData(); showToast('บันทึกสำเร็จ');
+    })
+    .catch(err => alert(err.message || 'บันทึกไม่สำเร็จ'));
+}
+
+function deleteData() {
+    if(currentId === -1) return;
+    if(!confirm('คุณต้องการย้ายเคสนี้ไปที่ถังขยะใช่หรือไม่?')) return;
+    const deleteNote = prompt('ระบุหมายเหตุการลบ เช่น ผู้ป่วยมายกเลิก / ผู้ป่วยโทรมายกเลิก / เลื่อนนัด', '');
+    if(deleteNote === null) return;
+    if(!deleteNote.trim()){
+        alert('กรุณาระบุหมายเหตุการลบ');
+        return;
+    }
+    apiCall('moveToTrash', { id: currentId, deleteNote })
+    .then(()=>{
+        closeModal();
+        fetchData();
+        loadTrash();
+        showToast('ย้ายไปถังขยะแล้ว');
+    })
+    .catch(err => alert(err.message || 'ย้ายไปถังขยะไม่สำเร็จ'));
+}
+
+function toggleTrash(){
+    const panel = document.getElementById('trash-panel');
+    if(panel.style.display === 'block'){ panel.style.display = 'none'; }
+    else{ panel.style.display = 'block'; loadTrash(); }
+}
+
+/* 🔥 ปรับปรุงระบบโหลดตารางถังขยะ: ดึงข้อมูลครบ และล็อกดีไซน์ปุ่มเรียงแถวเดียวกัน 100% ไม่หลุดบรรทัด */
+function loadTrash() {
+    const tbody = document.getElementById('trashTbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4"><div class="spinner-border text-secondary spinner-sm"></div> กำลังโหลดข้อมูลถังขยะ...</td></tr>';
+
+    apiCall('getTrashData').then(function(data) {
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted p-4">ไม่มีข้อมูลในถังขยะ</td></tr>';
+            return;
+        }
+
+        data.forEach(function(item, index) {
+            const tr = document.createElement('tr');
+            tr.className = 'trash-item-row';
+            tr.innerHTML = `
+                <td style="text-align: center;">${index + 1}</td>
+                <td>${escapeHtml(item.date)}</td>
+                <td><strong>${escapeHtml(item.name)}</strong><br><small style="color:var(--muted)">CID: ${escapeHtml(item.cid)}</small></td>
+                <td><small><b>ดร.</b> ${escapeHtml(item.doctor)}</small><br><span style="color:var(--primary-soft); font-weight:700;">${escapeHtml(item.procedure)}</span></td>
+                <td><small style="color:var(--muted); font-weight:700;">${escapeHtml(item.deletedAt || '-')}</small></td>
+                <td><span style="white-space:normal;">${escapeHtml(item.deleteNote || '-')}</span></td>
+                <td style="text-align: center;">
+                    <div style="display: flex; gap: 4px; justify-content: center; align-items: center; white-space: nowrap;">
+                        <button class="btn btn-success" style="padding: 4px 10px; font-size: 11px; border-radius:8px; gap:4px;" onclick="restoreTrash('${item.rowId}')">🔄 กู้คืน</button>
+                        <button class="btn btn-danger" style="padding: 4px 10px; font-size: 11px; border-radius:8px; gap:4px;" onclick="deleteForever('${item.rowId}')">🗑️ ลบถาวร</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }).catch(function(err) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#DC2626;">โหลดถังขยะไม่สำเร็จ</td></tr>';
+        console.error(err);
+    });
+}
+
+/* 🔥 ปรับฟังก์ชันสั่งกู้คืนข้อมูลฝั่งหน้าบ้าน ให้คุยกับชื่อฟังก์ชันหลังบ้านได้ตรงรหัสกัน */
+function restoreTrash(id){
+    if(!confirm('ต้องการกู้คืนข้อมูลนี้ใช่หรือไม่?')) return;
+    showToast('กำลังกู้คืนข้อมูล...');
+    apiCall('restoreTrashData', { id })
+    .then(()=>{
+        loadTrash();
+        fetchData();
+        showToast('กู้คืนข้อมูลสำเร็จ');
+    })
+    .catch(err => alert(err.message || 'กู้คืนข้อมูลไม่สำเร็จ'));
+}
+
+function deleteForever(id){
+    if(!confirm('ต้องการลบข้อมูลชุดนี้อย่างถาวรใช่หรือไม่? (ไม่สามารถย้อนคืนได้)')) return;
+    apiCall('deleteTrashForever', { id })
+    .then(()=>{
+        loadTrash();
+        showToast('ลบข้อมูลถาวรเรียบร้อยแล้ว');
+    })
+    .catch(err => alert(err.message || 'ลบข้อมูลถาวรไม่สำเร็จ'));
+}
+
+function deleteAllTrash(){
+    if(!confirm('คุณต้องการลบข้อมูลในถังขยะทั้งหมดถาวรใช่หรือไม่?')) return;
+    apiCall('deleteAllTrashForever')
+    .then(()=>{ loadTrash(); showToast('ลบข้อมูลในถังขยะทั้งหมดแล้ว'); })
+    .catch(err => alert(err.message || 'ลบข้อมูลถาวรไม่สำเร็จ'));
+}
+
+function printDailyCases() {
+    const dailyData = appointments.filter(a => sameDate(a.date, currentFilterDate));
+    if(!dailyData || dailyData.length === 0){
+        alert('ไม่มีข้อมูลผู้ป่วยในวันที่เลือก');
+        return;
+    }
+
+    const escapeHtml = (value) => (value ?? '').toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const groups = {};
+    dailyData.forEach(a => {
+        const doctor = (a.doctor || '').trim() || 'ไม่ระบุแพทย์';
+        if(!groups[doctor]) groups[doctor] = [];
+        groups[doctor].push(a);
+    });
+
+    const doctorNames = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+    const printWindow = window.open('', '_blank');
+    const html = `
+        <html>
+        <head>
+            <title>รายงานผู้ป่วยรายวัน ${escapeHtml(currentFilterDate)}</title>
+            <style>
+                body { font-family: 'Sarabun', Arial, sans-serif; padding: 14px; color: #111827; font-size: 10px; }
+                h2 { text-align: center; color: #174C3C; margin: 0 0 4px; font-size: 16px; }
+                .meta { text-align: center; color: #4B5563; margin-bottom: 10px; font-size: 10px; }
+                .doctor-title { margin: 12px 0 5px; padding: 6px 8px; background: #E7F3ED; color: #174C3C; border: 1px solid #B7D7C8; font-weight: 800; font-size: 11px; }
+                table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 8px; }
+                th, td { border: 1px solid #9CA3AF; padding: 4px 5px; text-align: left; vertical-align: top; word-break: break-word; }
+                th { background: #F3F4F6; font-size: 10px; }
+                .text-center { text-align: center; }
+                .summary { margin-top: 10px; text-align: right; font-weight: 800; font-size: 11px; }
+                @media print { body { padding: 6px; } .doctor-title { break-after: avoid; } table { break-inside: avoid; } }
+            </style>
+        </head>
+        <body>
+            <h2>รายงานผู้ป่วยประจำวันที่นัดหมาย</h2>
+            <div class="meta">วันที่: ${escapeHtml(currentFilterDate)} | รวมทั้งหมด ${dailyData.length} ราย</div>
+            ${doctorNames.map(doctor => `
+                <div class="doctor-title">${escapeHtml(doctor)} (${groups[doctor].length} ราย)</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:6%;" class="text-center">#</th>
+                            <th style="width:28%;">ชื่อผู้ป่วย</th>
+                            <th style="width:18%;">CID</th>
+                            <th style="width:28%;">หัตถการ</th>
+                            <th style="width:20%;">เบอร์โทรศัพท์</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${groups[doctor].map((a, index) => `
+                            <tr>
+                                <td class="text-center">${index + 1}</td>
+                                <td>${escapeHtml(a.name)}</td>
+                                <td>${escapeHtml(a.cid)}</td>
+                                <td>${escapeHtml(a.procedure)}</td>
+                                <td>${escapeHtml(a.phone)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `).join('')}
+            <div class="summary">รวมทั้งหมด ${dailyData.length} ราย</div>
+        </body>
+        </html>
+    `;
+    if(!printWindow){ alert('ไม่สามารถเปิดหน้าต่างพิมพ์ได้ กรุณาอนุญาต popup'); return; }
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    setTimeout(function() { printWindow.print(); printWindow.close(); }, 300);
+}
+
+</script>
+</body>
+</html>
